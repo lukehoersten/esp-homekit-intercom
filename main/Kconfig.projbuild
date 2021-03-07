@@ -1,0 +1,60 @@
+menu "HomeKit Door Configuration"
+
+    config HOMEKIT_USE_HARDCODED_SETUP_CODE
+        bool "Use hard-coded setup code"
+        default y
+        help
+            HomeKit does not recommend having the setup code programmed in the accessory as is.
+            Instead, it expects setup info (salt-verifier pair) generated for the given setup code.
+            Use this option only for testing purposes. For production, the setup info should be
+            used.
+
+    config HOMEKIT_SETUP_CODE
+        string "HomeKit Setup Code"
+        default "111-22-333"
+        depends on HOMEKIT_USE_HARDCODED_SETUP_CODE
+        help
+            Setup code to be used for HomeKit pairing, if hard-coded setup code is enabled.
+
+    config HOMEKIT_SETUP_ID
+        string "HomeKit Setup Id"
+        default "ES32"
+        depends on HOMEKIT_USE_HARDCODED_SETUP_CODE
+        help
+            Setup id to be used for HomeKit pairing, if hard-coded setup code is enabled.
+
+    config HOMEKIT_DOOR_LOCK_TIMEOUT
+        int "HomeKit Door Millisecond Timeout"
+        default 10000
+        help
+            Milliseconds before locking door
+
+    config HOMEKIT_DOOR_LOCK_GPIO_PIN
+         int "Door lock GPIO pin number"
+         range 0 34
+         default 21
+         help
+             GPIO pin number (IOxx) to control lock relay.
+
+    config HOMEKIT_DOOR_BELL_GPIO_PIN
+         int "Doorbell GPIO pin number"
+         range 0 34
+         default 34
+         help
+             GPIO pin number (IOxx) from which to read doorbell signal.
+
+    config HOMEKIT_DOOR_WIFI_RESET_GPIO_PIN
+         int "Door WIFI reset GPIO pin number"
+         range 0 34
+         default 0
+         help
+             GPIO pin number (IOxx) to reset wifi.
+
+    config HOMEKIT_DOOR_LED_GPIO_PIN
+         int "LED GPIO pin number"
+         range 0 34
+         default 13
+         help
+             GPIO pin number (IOxx) for LED.
+
+endmenu
