@@ -1,4 +1,4 @@
-menu "HomeKit Door Configuration"
+menu "HomeKit Intercom Configuration"
 
     config HOMEKIT_USE_HARDCODED_SETUP_CODE
         bool "Use hard-coded setup code"
@@ -23,34 +23,34 @@ menu "HomeKit Door Configuration"
         help
             Setup id to be used for HomeKit pairing, if hard-coded setup code is enabled.
 
-    config HOMEKIT_DOOR_LOCK_TIMEOUT
-        int "HomeKit Door Millisecond Timeout"
+    config HOMEKIT_INTERCOM_LOCK_TIMEOUT
+        int "HomeKit Intercom Millisecond Timeout"
         default 10000
         help
-            Milliseconds before locking door
+            Milliseconds before locking intercom
 
-    config HOMEKIT_DOOR_LOCK_GPIO_PIN
-         int "Door lock GPIO pin number"
+    config HOMEKIT_INTERCOM_LOCK_GPIO_PIN
+         int "Intercom lock GPIO pin number"
          range 0 34
          default 21
          help
              GPIO pin number (IOxx) to control lock relay.
 
-    config HOMEKIT_DOOR_BELL_GPIO_PIN
-         int "Doorbell GPIO pin number"
+    config HOMEKIT_INTERCOM_BELL_GPIO_PIN
+         int "Intercombell GPIO pin number"
          range 0 34
          default 34
          help
-             GPIO pin number (IOxx) from which to read doorbell signal.
+             GPIO pin number (IOxx) from which to read intercom bell signal.
 
-    config HOMEKIT_DOOR_WIFI_RESET_GPIO_PIN
-         int "Door WIFI reset GPIO pin number"
+    config HOMEKIT_INTERCOM_WIFI_RESET_GPIO_PIN
+         int "Intercom WIFI reset GPIO pin number"
          range 0 34
          default 0
          help
              GPIO pin number (IOxx) to reset wifi.
 
-    config HOMEKIT_DOOR_LED_GPIO_PIN
+    config HOMEKIT_INTERCOM_LED_GPIO_PIN
          int "LED GPIO pin number"
          range 0 34
          default 13

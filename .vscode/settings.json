@@ -1,6 +1,6 @@
 {
   "C_Cpp.clang_format_style": "Visual Studio",
-  "editor.formatOnSave": false,
+  "editor.formatOnSave": true,
   "[cpp]": {
     "editor.quickSuggestions": true
   },
@@ -9,6 +9,10 @@
   },
   "C_Cpp.intelliSenseEngine": "Tag Parser",
   "files.associations": {
-    "stdio.h": "c"
-  }
+    "stdio.h": "c",
+    "hap.h": "c",
+    "freertos.h": "c"
+  },
+  "git.ignoreLimitWarning": true,
+  "cmake.configureOnOpen": false
 }
