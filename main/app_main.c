@@ -33,6 +33,7 @@ static const char *TAG = "HAP Intercom";
 #define HAP_LOCK_TARGET_STATE_SECURED 1
 static hap_val_t HAP_LOCK_CURRENT_STATE_UNSECURED = {.u = 0};
 static hap_val_t HAP_LOCK_CURRENT_STATE_SECURED = {.u = 1};
+static hap_val_t HAP_PROGRAMMABLE_SWITCH_EVENT_SINGLE_PRESS = {.u = 0};
 
 #define ESP_INTR_FLAG_DEFAULT 0
 
@@ -44,15 +45,27 @@ static const uint8_t INTERCOM_EVENT_QUEUE_LOCK_TIMEOUT = 4;
 /* static uint8_t tlv8buff[128];
 static hap_data_val_t null_tlv8 = {.buf = &tlv8buff, .buflen = 127}; */
 
+volatile uint32_t avg_bell_val = 0;
+volatile bool is_intercom_bell_blocked = false;
 static xQueueHandle intercom_event_queue = NULL;
-static TimerHandle_t intercom_lock_timer = NULL;
+static TimerHandle_t intercom_lock_timer = NULL; // lock the door when timer triggered
+static TimerHandle_t intercom_bell_timer = NULL; // ignore new bells until timer triggered
+
+static bool is_bell_ringing(int val)
+{
+	return 1.2 < val && val < 2.5;
+}
 
 /**
  * @brief the recover intercom bell gpio interrupt function
  */
 static void IRAM_ATTR intercom_bell_isr(void *arg)
 {
-	xQueueSendFromISR(intercom_event_queue, (void *)&INTERCOM_EVENT_QUEUE_BELL, NULL);
+	if (!is_intercom_bell_blocked && is_bell_ringing(adc1_get_raw(CONFIG_HOMEKIT_INTERCOM_BELL_ADC1_CHANNEL)))
+	{
+		xQueueSendFromISR(intercom_event_queue, (void *)&INTERCOM_EVENT_QUEUE_BELL, NULL);
+		is_intercom_bell_blocked = true;
+	}
 }
 
 /**
@@ -62,7 +75,7 @@ static void intercom_bell_init(uint32_t key_gpio_pin)
 {
 	gpio_config_t io_conf;
 
-	io_conf.intr_type = GPIO_INTR_NEGEDGE;		 /* Interrupt for falling edge  */
+	io_conf.intr_type = GPIO_INTR_POSEDGE;		 /* Interrupt for rising edge  */
 	io_conf.pin_bit_mask = 1 << key_gpio_pin;	 /* Bit mask of the pins */
 	io_conf.mode = GPIO_MODE_INPUT;				 /* Set as input mode */
 	io_conf.pull_up_en = GPIO_PULLUP_DISABLE;	 /* Disable internal pull-up */
@@ -72,6 +85,10 @@ static void intercom_bell_init(uint32_t key_gpio_pin)
 
 	gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);							 /* Install gpio isr service */
 	gpio_isr_handler_add(key_gpio_pin, intercom_bell_isr, (void *)key_gpio_pin); /* Hook isr handler for specified gpio pin */
+
+	// https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/adc.html#_CPPv425adc1_config_channel_atten14adc1_channel_t11adc_atten_t
+	adc1_config_width(ADC_WIDTH_BIT_12);
+	adc1_config_channel_atten(CONFIG_HOMEKIT_INTERCOM_BELL_ADC1_CHANNEL, ADC_ATTEN_DB_11);
 }
 
 /**
@@ -81,7 +98,7 @@ static void intercom_lock_init(uint32_t key_gpio_pin)
 {
 	gpio_config_t io_conf;
 
-	io_conf.intr_type = GPIO_INTR_DISABLE;		 /* Interrupt for falling edge  */
+	io_conf.intr_type = GPIO_INTR_DISABLE;		 /* Disable interrupt  */
 	io_conf.pin_bit_mask = 1 << key_gpio_pin;	 /* Bit mask of the pins */
 	io_conf.mode = GPIO_MODE_OUTPUT;			 /* Set as input mode */
 	io_conf.pull_up_en = GPIO_PULLUP_DISABLE;	 /* Disable internal pull-up */
@@ -145,15 +162,11 @@ static int intercom_identify(hap_acc_t *ha)
 
 static void intercom_bell_ring(hap_char_t *intercom_bell_current_state)
 {
-	adc1_config_width(ADC_WIDTH_BIT_12);
-	adc1_config_channel_atten(ADC1_CHANNEL_2, ADC_ATTEN_DB_0);
-	int val = adc1_get_raw(ADC1_CHANNEL_2);
+	ESP_LOGI(TAG, "Intercom bell ring event processed");
 
-	/* int level = gpio_get_level(CONFIG_HOMEKIT_INTERCOM_BELL_GPIO_PIN); */
+	hap_char_update_val(intercom_bell_current_state, &HAP_PROGRAMMABLE_SWITCH_EVENT_SINGLE_PRESS);
 
-	ESP_LOGI(TAG, "Intercom bell ring event processed [%d]", val);
-
-	/* hap_char_update_val(intercom_bell_current_state, &HAP_PROGRAMMABLE_SWITCH_EVENT_SINGLE_PRESS); */
+	xTimerReset(intercom_bell_timer, 10);
 }
 
 static void intercom_unlock(hap_char_t *intercom_lock_current_state)
@@ -181,6 +194,12 @@ static void intercom_lock_timeout(hap_char_t *intercom_lock_target_state)
 	xQueueSendToBack(intercom_event_queue, (void *)&INTERCOM_EVENT_QUEUE_LOCK, 10);
 	hap_val_t target_lock_secured = {.u = HAP_LOCK_TARGET_STATE_SECURED};
 	hap_char_update_val(intercom_lock_target_state, &target_lock_secured);
+}
+
+static void intercom_bell_timer_cb(TimerHandle_t timer)
+{
+	ESP_LOGI(TAG, "Intercom bell timer fired");
+	is_intercom_bell_blocked = false;
 }
 
 static int intercom_lock_write_cb(hap_write_data_t write_data[], int count, void *serv_priv, void *write_priv)
@@ -299,6 +318,7 @@ static void intercom_thread_entry(void *p)
 	app_wifi_start(portMAX_DELAY); /* Start Wi-Fi */
 
 	intercom_lock_timer = xTimerCreate("intercom_lock_timer", pdMS_TO_TICKS(CONFIG_HOMEKIT_INTERCOM_LOCK_TIMEOUT), pdFALSE, 0, intercom_lock_timer_cb);
+	intercom_bell_timer = xTimerCreate("intercom_bell_timer", pdMS_TO_TICKS(CONFIG_HOMEKIT_INTERCOM_LOCK_TIMEOUT), pdFALSE, 0, intercom_bell_timer_cb);
 
 	/* Listen for intercom bell state change events. Other read/write functionality will be handled by the HAP Core.  When the
 	 * intercom bell in Use GPIO goes low, it means intercom bell is not ringing.  When the Intercom in Use GPIO goes high, it means

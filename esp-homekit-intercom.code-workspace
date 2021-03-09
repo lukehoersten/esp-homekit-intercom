@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"stdio.h": "c",
+			"hap.h": "c",
+			"freertos.h": "c"
+		},
+		"git.ignoreLimitWarning": true
+	}
+}
