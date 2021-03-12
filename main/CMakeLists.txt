@@ -1,4 +1,4 @@
 idf_component_register(
-    SRCS "src/event_queue.c" "src/lock.c" "src/bell.c" "app_main.c"
+    SRCS "src/event_queue.c" "src/lock.c" "src/bell.c" "src/led.c" "app_main.c"
     INCLUDE_DIRS "include"
 )
