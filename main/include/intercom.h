@@ -1,0 +1,1 @@
+static const char *TAG = "HAP Intercom";

@@ -7,7 +7,7 @@
 #include <hap_apple_servs.h>
 #include <hap_apple_chars.h>
 
-#include <event_queue.h>
+#include <intercom.h>
 #include <bell.h>
 
 #define ESP_INTR_FLAG_DEFAULT 0
@@ -35,7 +35,7 @@ void IRAM_ATTR intercom_bell_isr(void *arg)
     if (is_bell_ringing(val))
     {
         ESP_LOGI(TAG, "Intercom bell ring value in range [%d]", val);
-        intercom_event_queue_bell_ring();
+        intercom_bell_ring();
         is_intercom_bell_blocked = true;
     }
     else
@@ -46,7 +46,7 @@ void IRAM_ATTR intercom_bell_isr(void *arg)
 
 void intercom_bell_ring()
 {
-    ESP_LOGI(TAG, "Intercom bell ring event processed");
+    ESP_LOGI(TAG, "Intercom bell ring");
     hap_char_update_val(intercom_bell_current_state, &HAP_PROGRAMMABLE_SWITCH_EVENT_SINGLE_PRESS);
     xTimerReset(intercom_bell_timer, 10);
 }

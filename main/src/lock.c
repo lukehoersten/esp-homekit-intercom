@@ -7,26 +7,29 @@
 #include <hap_apple_servs.h>
 #include <hap_apple_chars.h>
 
-#include <event_queue.h>
 #include <lock.h>
+#include <intercom.h>
 
 #define INTERCOM_LOCK_GPIO_LOCKED 0
 #define INTERCOM_LOCK_GPIO_UNLOCKED 1
 
+#define HAP_LOCK_CURRENT_STATE_UNSECURED 0
+#define HAP_LOCK_CURRENT_STATE_SECURED 1
+
 #define HAP_LOCK_TARGET_STATE_UNSECURED 0
 #define HAP_LOCK_TARGET_STATE_SECURED 1
 
-static hap_val_t HAP_VAL_LOCK_CURRENT_STATE_UNSECURED = {.u = 0};
-static hap_val_t HAP_VAL_LOCK_CURRENT_STATE_SECURED = {.u = 1};
+static hap_val_t HAP_VAL_LOCK_CURRENT_STATE_UNSECURED = {.u = HAP_LOCK_CURRENT_STATE_UNSECURED};
+static hap_val_t HAP_VAL_LOCK_CURRENT_STATE_SECURED = {.u = HAP_LOCK_CURRENT_STATE_SECURED};
 static hap_val_t HAP_VAL_LOCK_TARGET_STATE_SECURED = {.u = HAP_LOCK_TARGET_STATE_SECURED};
 
-static TimerHandle_t intercom_lock_timer = NULL; // lock the door when timer triggered
+static TimerHandle_t intercom_lock_timer; // lock the door when timer triggered
 static hap_char_t *intercom_lock_current_state;
 static hap_char_t *intercom_lock_target_state;
 
 void intercom_lock_unsecure()
 {
-    ESP_LOGI(TAG, "Intercom lock unsecure event processed");
+    ESP_LOGI(TAG, "Intercom lock unsecure");
     gpio_set_level(CONFIG_HOMEKIT_INTERCOM_LOCK_GPIO_PIN, INTERCOM_LOCK_GPIO_UNLOCKED);
     hap_char_update_val(intercom_lock_current_state, &HAP_VAL_LOCK_CURRENT_STATE_UNSECURED);
     xTimerReset(intercom_lock_timer, 10);
@@ -34,16 +37,9 @@ void intercom_lock_unsecure()
 
 void intercom_lock_secure()
 {
-    ESP_LOGI(TAG, "Intercom lock secure event processed");
+    ESP_LOGI(TAG, "Intercom lock secure");
     gpio_set_level(CONFIG_HOMEKIT_INTERCOM_LOCK_GPIO_PIN, INTERCOM_LOCK_GPIO_LOCKED);
     hap_char_update_val(intercom_lock_current_state, &HAP_VAL_LOCK_CURRENT_STATE_SECURED);
-}
-
-void intercom_lock_timeout()
-{
-    ESP_LOGI(TAG, "Intercom lock timeout event processed");
-    intercom_event_queue_lock_secure();
-    hap_char_update_val(intercom_lock_target_state, &HAP_VAL_LOCK_TARGET_STATE_SECURED);
 }
 
 int intercom_lock_write_cb(hap_write_data_t write_data[], int count, void *serv_priv, void *write_priv)
@@ -60,10 +56,10 @@ int intercom_lock_write_cb(hap_write_data_t write_data[], int count, void *serv_
             switch (write->val.u)
             {
             case HAP_LOCK_TARGET_STATE_UNSECURED:
-                intercom_event_queue_lock_unsecure();
+                intercom_lock_unsecure();
                 break;
             case HAP_LOCK_TARGET_STATE_SECURED:
-                intercom_event_queue_lock_secure();
+                intercom_lock_secure();
                 break;
             }
 
@@ -82,7 +78,8 @@ int intercom_lock_write_cb(hap_write_data_t write_data[], int count, void *serv_
 void intercom_lock_timer_cb(TimerHandle_t timer)
 {
     ESP_LOGI(TAG, "Intercom lock timer fired");
-    intercom_event_queue_lock_timeout();
+    intercom_lock_secure();
+    hap_char_update_val(intercom_lock_target_state, &HAP_VAL_LOCK_TARGET_STATE_SECURED);
 }
 
 hap_serv_t *intercom_lock_init(uint32_t key_gpio_pin)

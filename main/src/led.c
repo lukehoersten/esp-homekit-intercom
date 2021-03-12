@@ -5,7 +5,7 @@
 #include <hap.h>
 
 #include <led.h>
-#include <event_queue.h>
+#include <intercom.h>
 
 int intercom_led_identify(hap_acc_t *ha)
 {

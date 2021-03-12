@@ -8,7 +8,7 @@
 #include <led.h>
 #include <lock.h>
 #include <bell.h>
-#include <event_queue.h>
+#include <intercom.h>
 
 #define INTERCOM_TASK_PRIORITY 1
 #define INTERCOM_TASK_STACKSIZE 4 * 1024
@@ -40,13 +40,6 @@ static void intercom_thread_entry(void *p)
 	/* Add a dummy Product Data */
 	uint8_t product_data[] = {'E', 'S', 'P', '3', '2', 'H', 'A', 'P'};
 	hap_acc_add_product_data(intercom_accessory, product_data, sizeof(product_data));
-
-	if (!intercom_event_queue_init())
-	{
-		ESP_LOGI(TAG, "Failed to initialize event queue");
-		return;
-	}
-
 	hap_acc_add_serv(intercom_accessory, intercom_bell_init(CONFIG_HOMEKIT_INTERCOM_BELL_GPIO_PIN));
 	hap_acc_add_serv(intercom_accessory, intercom_lock_init(CONFIG_HOMEKIT_INTERCOM_LOCK_GPIO_PIN));
 	intercom_led_init(CONFIG_HOMEKIT_INTERCOM_LED_GPIO_PIN);
@@ -82,7 +75,7 @@ static void intercom_thread_entry(void *p)
 	hap_start();				   /* After all the initializations are done, start the HAP core */
 	app_wifi_start(portMAX_DELAY); /* Start Wi-Fi */
 
-	intercom_event_queue_run();
+	vTaskDelete(NULL); /* The task ends here. The read/write callbacks will be invoked by the HAP Framework */
 }
 
 void app_main()
