@@ -66,7 +66,7 @@ void intercom_event_queue_run()
 
 bool intercom_event_queue_init()
 {
-    int queue_len = 4;
+    int queue_len = 8;
     int queue_item_size = sizeof(uint8_t);
     intercom_event_queue = xQueueCreate(queue_len, queue_item_size);
     return intercom_event_queue != NULL;

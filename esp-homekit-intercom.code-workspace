@@ -8,8 +8,13 @@
 		"files.associations": {
 			"stdio.h": "c",
 			"hap.h": "c",
-			"freertos.h": "c"
+			"freertos.h": "c",
+			"hap_apple_servs.h": "c",
+			"app_hap_setup_payload.h": "c",
+			"lock.h": "c",
+			"task.h": "c"
 		},
-		"git.ignoreLimitWarning": true
+		"git.ignoreLimitWarning": true,
+		"idf.port": "/dev/cu.usbserial-01D11E9B"
 	}
 }

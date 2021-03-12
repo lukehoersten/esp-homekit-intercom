@@ -23,9 +23,6 @@ static void intercom_thread_entry(void *p)
 {
 	hap_init(HAP_TRANSPORT_WIFI); /* Initialize the HAP core */
 
-	/* Initialise the mandatory parameters for Accessory which will be added as
-	 * the mandatory services internally
-	 */
 	hap_acc_cfg_t cfg = {
 		.name = "Intercom",
 		.manufacturer = "Luke Hoersten",
@@ -38,7 +35,7 @@ static void intercom_thread_entry(void *p)
 		.cid = HAP_CID_DOOR,
 	};
 
-	hap_acc_t *intercom_accessory = hap_acc_create(&cfg); /* Create accessory object */
+	hap_acc_t *intercom_accessory = hap_acc_create(&cfg);
 
 	/* Add a dummy Product Data */
 	uint8_t product_data[] = {'E', 'S', 'P', '3', '2', 'H', 'A', 'P'};

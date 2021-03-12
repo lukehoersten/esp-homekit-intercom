@@ -25,19 +25,26 @@ bool is_bell_ringing(int val)
 
 void IRAM_ATTR intercom_bell_isr(void *arg)
 {
-    if (!is_intercom_bell_blocked && is_bell_ringing(adc1_get_raw(CONFIG_HOMEKIT_INTERCOM_BELL_ADC1_CHANNEL)))
+    if (is_intercom_bell_blocked)
+        return;
+
+    int val = adc1_get_raw(CONFIG_HOMEKIT_INTERCOM_BELL_ADC1_CHANNEL);
+    if (is_bell_ringing(val))
     {
+        ESP_LOGI(TAG, "Intercom bell ring value in range [%d]", val);
         intercom_event_queue_bell_ring();
         is_intercom_bell_blocked = true;
+    }
+    else
+    {
+        ESP_LOGI(TAG, "Intercom bell ring value out of range [%d]", val);
     }
 }
 
 void intercom_bell_ring()
 {
     ESP_LOGI(TAG, "Intercom bell ring event processed");
-
     hap_char_update_val(intercom_bell_current_state, &HAP_PROGRAMMABLE_SWITCH_EVENT_SINGLE_PRESS);
-
     xTimerReset(intercom_bell_timer, 10);
 }
 
