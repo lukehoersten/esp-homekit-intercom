@@ -26,7 +26,10 @@ bool is_bell_ringing(int val)
 void IRAM_ATTR intercom_bell_isr(void *arg)
 {
     if (is_intercom_bell_blocked)
+    {
+        ESP_LOGI(TAG, "Intercom bell ring BLOCKED");
         return;
+    }
 
     int val = adc1_get_raw(CONFIG_HOMEKIT_INTERCOM_BELL_ADC1_CHANNEL);
     if (is_bell_ringing(val))

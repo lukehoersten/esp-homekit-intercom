@@ -15,6 +15,7 @@
 			"task.h": "c"
 		},
 		"git.ignoreLimitWarning": true,
-		"idf.port": "/dev/cu.usbserial-01D11E9B"
+		"idf.port": "/dev/cu.usbserial-01D11E9B",
+		"idf.flashType": "UART"
 	}
 }

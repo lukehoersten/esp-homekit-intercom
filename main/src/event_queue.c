@@ -15,21 +15,25 @@ static xQueueHandle intercom_event_queue = NULL;
 
 void intercom_event_queue_bell_ring()
 {
+    ESP_LOGI(TAG, "Intercom event queued BELL RING");
     xQueueSendFromISR(intercom_event_queue, (void *)&INTERCOM_EVENT_QUEUE_BELL_RING, NULL);
 }
 
 void intercom_event_queue_lock_unsecure()
 {
+    ESP_LOGI(TAG, "Intercom event queued LOCK UNSECURE");
     xQueueSendToBack(intercom_event_queue, (void *)&INTERCOM_EVENT_QUEUE_LOCK_UNSECURE, 10);
 }
 
 void intercom_event_queue_lock_secure()
 {
+    ESP_LOGI(TAG, "Intercom event queued LOCK SECURE");
     xQueueSendToBack(intercom_event_queue, (void *)&INTERCOM_EVENT_QUEUE_LOCK_SECURE, 10);
 }
 
 void intercom_event_queue_lock_timeout()
 {
+    ESP_LOGI(TAG, "Intercom event queued LOCK TIMEOUT");
     xQueueSendToBack(intercom_event_queue, (void *)&INTERCOM_EVENT_QUEUE_LOCK_TIMEOUT, 10);
 }
 
