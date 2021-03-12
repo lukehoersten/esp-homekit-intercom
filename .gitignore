@@ -1,3 +1,4 @@
 sdkconfig
 sdkconfig.old
 build/*
+esp-homekit-intercom.code-workspace
