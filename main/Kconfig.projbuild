@@ -31,35 +31,35 @@ menu "HomeKit Intercom Configuration"
 
     config HOMEKIT_INTERCOM_LOCK_GPIO_PIN
          int "Intercom lock GPIO pin number"
-         range 0 34
+         range 0 39
          default 21
          help
              GPIO pin number to control lock relay.
 
     config HOMEKIT_INTERCOM_BELL_GPIO_PIN
          int "Intercom bell GPIO pin number"
-         range 0 34
-         default 34
+         range 0 39
+         default 33
          help
              GPIO pin number from which to read intercom bell signal.
 
     config HOMEKIT_INTERCOM_BELL_ADC1_CHANNEL
-    int "Intercom bell ADC1 channel number"
-    range 0 7
-    default 6
-    help
-        ADC1 channel number from which to read intercom bell signal.
+        int "Intercom bell ADC1 channel number"
+        range 0 12
+        default 9
+        help
+           ADC1 channel number from which to read intercom bell signal.
 
     config HOMEKIT_INTERCOM_WIFI_RESET_GPIO_PIN
          int "Intercom WIFI reset GPIO pin number"
-         range 0 34
+         range 0 39
          default 0
          help
              GPIO pin number to reset wifi.
 
     config HOMEKIT_INTERCOM_LED_GPIO_PIN
          int "LED GPIO pin number"
-         range 0 34
+         range 0 39
          default 13
          help
              GPIO pin number for LED.

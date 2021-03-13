@@ -71,9 +71,14 @@ static void intercom_thread_entry(void *p)
 
 	hap_enable_mfi_auth(HAP_MFI_AUTH_HW); /* Enable Hardware MFi authentication (applicable only for MFi variant of SDK) */
 
-	app_wifi_init();			   /* Initialize Wi-Fi */
-	hap_start();				   /* After all the initializations are done, start the HAP core */
+	app_wifi_init(); /* Initialize Wi-Fi */
+	hap_start();	 /* After all the initializations are done, start the HAP core */
+
+	ESP_LOGI(TAG, "Intercom HAP initialized");
+
 	app_wifi_start(portMAX_DELAY); /* Start Wi-Fi */
+
+	ESP_LOGI(TAG, "Intercom WIFI initialized");
 
 	vTaskDelete(NULL); /* The task ends here. The read/write callbacks will be invoked by the HAP Framework */
 }
