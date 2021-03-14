@@ -97,7 +97,7 @@ hap_serv_t *intercom_lock_init(uint32_t key_gpio_pin)
     gpio_config_t io_conf;
 
     io_conf.intr_type = GPIO_INTR_DISABLE;       /* Disable interrupt  */
-    io_conf.pin_bit_mask = 1 << key_gpio_pin;    /* Bit mask of the pins */
+    io_conf.pin_bit_mask = 1ULL << key_gpio_pin; /* Bit mask of the pins */
     io_conf.mode = GPIO_MODE_OUTPUT;             /* Set as input mode */
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;    /* Disable internal pull-up */
     io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE; /* Enable internal pull-down */
