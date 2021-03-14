@@ -35,6 +35,8 @@ static void intercom_thread_entry(void *p)
 		.cid = HAP_CID_DOOR,
 	};
 
+	ESP_LOGI(TAG, "Intercom GPIO Pins [BELL: %d, ADC1: %d, LOCK: %d]", CONFIG_HOMEKIT_INTERCOM_BELL_GPIO_PIN, CONFIG_HOMEKIT_INTERCOM_BELL_ADC1_CHANNEL, CONFIG_HOMEKIT_INTERCOM_LOCK_GPIO_PIN);
+
 	hap_acc_t *intercom_accessory = hap_acc_create(&cfg);
 
 	/* Add a dummy Product Data */
