@@ -14,11 +14,6 @@
 #define INTERCOM_TASK_STACKSIZE 4 * 1024
 #define INTERCOM_TASK_NAME "hap_intercom"
 
-#define RESET_NETWORK_BUTTON_TIMEOUT 3
-
-/* static uint8_t tlv8buff[128];
-static hap_data_val_t null_tlv8 = {.buf = &tlv8buff, .buflen = 127}; */
-
 static void intercom_thread_entry(void *p)
 {
 	hap_init(HAP_TRANSPORT_WIFI); /* Initialize the HAP core */
@@ -75,12 +70,10 @@ static void intercom_thread_entry(void *p)
 
 	app_wifi_init(); /* Initialize Wi-Fi */
 	hap_start();	 /* After all the initializations are done, start the HAP core */
-
-	ESP_LOGI(TAG, "Intercom HAP initialized");
+	ESP_LOGI(TAG, "Intercom HAP started");
 
 	app_wifi_start(portMAX_DELAY); /* Start Wi-Fi */
-
-	ESP_LOGI(TAG, "Intercom WIFI initialized");
+	ESP_LOGI(TAG, "Intercom WIFI started");
 
 	vTaskDelete(NULL); /* The task ends here. The read/write callbacks will be invoked by the HAP Framework */
 }
