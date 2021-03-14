@@ -36,7 +36,6 @@ void IRAM_ATTR intercom_bell_isr(void *arg)
     {
         ESP_LOGI(TAG, "Intercom bell ring value in range [%d]", val);
         intercom_bell_ring();
-        is_intercom_bell_blocked = true;
     }
     else
     {
@@ -48,6 +47,7 @@ void intercom_bell_ring()
 {
     ESP_LOGI(TAG, "Intercom bell ring");
     hap_char_update_val(intercom_bell_current_state, &HAP_PROGRAMMABLE_SWITCH_EVENT_SINGLE_PRESS);
+    is_intercom_bell_blocked = true;
     xTimerReset(intercom_bell_timer, 10);
 }
 
@@ -68,7 +68,7 @@ hap_serv_t *intercom_bell_init(uint32_t key_gpio_pin)
 
     gpio_config_t io_conf;
 
-    io_conf.intr_type = GPIO_INTR_POSEDGE;       /* Interrupt for rising edge  */
+    io_conf.intr_type = GPIO_INTR_NEGEDGE;       /* Interrupt for rising edge  */
     io_conf.pin_bit_mask = 1ULL << key_gpio_pin; /* Bit mask of the pins */
     io_conf.mode = GPIO_MODE_INPUT;              /* Set as input mode */
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;    /* Disable internal pull-up */
@@ -80,8 +80,8 @@ hap_serv_t *intercom_bell_init(uint32_t key_gpio_pin)
     gpio_isr_handler_add(key_gpio_pin, intercom_bell_isr, (void *)key_gpio_pin); /* Hook isr handler for specified gpio pin */
 
     // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/adc.html#_CPPv425adc1_config_channel_atten14adc1_channel_t11adc_atten_t
-    adc1_config_width(ADC_WIDTH_MAX);
-    adc1_config_channel_atten(CONFIG_HOMEKIT_INTERCOM_BELL_ADC1_CHANNEL, ADC_ATTEN_MAX);
+    adc1_config_width(ADC_WIDTH_BIT_12);
+    adc1_config_channel_atten(CONFIG_HOMEKIT_INTERCOM_BELL_ADC1_CHANNEL, ADC_ATTEN_DB_6);
 
     return intercom_bell_service;
 }
