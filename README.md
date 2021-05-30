@@ -40,6 +40,7 @@ only measured by the ADC.
 - r1 = 100kO
 - r2 = 10kO + 2.2kO
 
+- 1.85V seems to be where high goes to low. - Probably remove the 2.2kO resister.
 
 ## Partition Sizing
 
@@ -62,8 +63,9 @@ phy_init, data, phy,     ,        0x1000,
 factory,  app,  factory, ,        0x180000, # Change from 1M to 0x180000
 ```
 
-
 ## Doorbell ADC Output
+
+An ESP32 GPIO pin cannot bt used for both interrupts and ADC sampling at the same time so two adjacent GPIO pins are bridged to take the same voltage, one for interrupt handling and the other to read the ADC.
 
 ```I (65813) HAP Intercom: Intercom bell ring value in range [2960]
 I (66813) HAP Intercom: Intercom bell ring value in range [2966]
@@ -96,3 +98,7 @@ I (92813) HAP Intercom: Intercom bell ring value in range [2959]
 I (93813) HAP Intercom: Intercom bell ring value in range [2951]
 I (94813) HAP Intercom: Intercom bell ring value in range [2949]
 ```
+
+## Building
+
+Use the [Espressif esp-ide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html#step-2-get-esp-idf) to build. This also includes a custom fork of the [Espressif HAP SDK](https://github.com/espressif/esp-homekit-sdk) that adds HomeKit doorbell support.

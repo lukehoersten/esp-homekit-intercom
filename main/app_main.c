@@ -14,7 +14,7 @@
 #define INTERCOM_TASK_STACKSIZE 4 * 1024
 #define INTERCOM_TASK_NAME "hap_intercom"
 
-static void intercom_thread_entry(void *p)
+static void intercom_init(void *p)
 {
 	hap_init(HAP_TRANSPORT_WIFI); /* Initialize the HAP core */
 
@@ -30,16 +30,13 @@ static void intercom_thread_entry(void *p)
 		.cid = HAP_CID_DOOR,
 	};
 
-	ESP_LOGI(TAG, "GPIO Pins [BELL: %d, ADC1: %d, LOCK: %d, LED: %d]", CONFIG_HOMEKIT_INTERCOM_BELL_GPIO_PIN, CONFIG_HOMEKIT_INTERCOM_BELL_ADC1_CHANNEL, CONFIG_HOMEKIT_INTERCOM_LOCK_GPIO_PIN, CONFIG_HOMEKIT_INTERCOM_LED_GPIO_PIN);
-
 	hap_acc_t *intercom_accessory = hap_acc_create(&cfg);
 
-	/* Add a dummy Product Data */
 	uint8_t product_data[] = {'E', 'S', 'P', '3', '2', 'H', 'A', 'P'};
 	hap_acc_add_product_data(intercom_accessory, product_data, sizeof(product_data));
-	hap_acc_add_serv(intercom_accessory, intercom_bell_init(CONFIG_HOMEKIT_INTERCOM_BELL_GPIO_PIN));
-	hap_acc_add_serv(intercom_accessory, intercom_lock_init(CONFIG_HOMEKIT_INTERCOM_LOCK_GPIO_PIN));
-	intercom_led_init(CONFIG_HOMEKIT_INTERCOM_LED_GPIO_PIN);
+	hap_acc_add_serv(intercom_accessory, intercom_bell_init());
+	hap_acc_add_serv(intercom_accessory, intercom_lock_init());
+	intercom_led_init();
 
 	hap_add_accessory(intercom_accessory); /* Add the Accessory to the HomeKit Database */
 
@@ -80,5 +77,5 @@ static void intercom_thread_entry(void *p)
 
 void app_main()
 {
-	xTaskCreate(intercom_thread_entry, INTERCOM_TASK_NAME, INTERCOM_TASK_STACKSIZE, NULL, INTERCOM_TASK_PRIORITY, NULL);
+	xTaskCreate(intercom_init, INTERCOM_TASK_NAME, INTERCOM_TASK_STACKSIZE, NULL, INTERCOM_TASK_PRIORITY, NULL);
 }

@@ -11,8 +11,15 @@
   "files.associations": {
     "stdio.h": "c",
     "hap.h": "c",
-    "freertos.h": "c"
+    "freertos.h": "c",
+    "intercom.h": "c",
+    "bell.h": "c",
+    "hap_apple_servs.h": "c",
+    "hap_apple_chars.h": "c",
+    "adc.h": "c"
   },
   "git.ignoreLimitWarning": true,
-  "cmake.configureOnOpen": false
+  "cmake.configureOnOpen": false,
+  "idf.port": "/dev/cu.usbserial-01D93418",
+  "idf.flashType": "UART"
 }

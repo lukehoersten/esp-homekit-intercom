@@ -4,10 +4,14 @@
 
 bool is_bell_ringing(int val);
 
-void IRAM_ATTR intercom_bell_isr(void *arg);
+void intercom_bell_read(void *p);
 
-void intercom_bell_ring();
+void IRAM_ATTR intercom_bell_isr(void *arg);
 
 void intercom_bell_timer_cb(TimerHandle_t timer);
 
-hap_serv_t *intercom_bell_init(uint32_t key_gpio_pin);
+void intercom_bell_isr_gpio_init();
+
+void intercom_bell_adc_gpio_init();
+
+hap_serv_t *intercom_bell_init();

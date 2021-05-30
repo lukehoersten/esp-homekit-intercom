@@ -30,7 +30,7 @@ static hap_char_t *intercom_lock_target_state;
 void intercom_lock_unsecure()
 {
     ESP_LOGI(TAG, "Intercom lock unsecure");
-    gpio_set_level(CONFIG_HOMEKIT_INTERCOM_LOCK_GPIO_PIN, INTERCOM_LOCK_GPIO_UNLOCKED);
+    gpio_set_level(GPIO_NUM_21, INTERCOM_LOCK_GPIO_UNLOCKED);
     hap_char_update_val(intercom_lock_current_state, &HAP_VAL_LOCK_CURRENT_STATE_UNSECURED);
     xTimerReset(intercom_lock_timer, 10);
 }
@@ -38,7 +38,7 @@ void intercom_lock_unsecure()
 void intercom_lock_secure()
 {
     ESP_LOGI(TAG, "Intercom lock secure");
-    gpio_set_level(CONFIG_HOMEKIT_INTERCOM_LOCK_GPIO_PIN, INTERCOM_LOCK_GPIO_LOCKED);
+    gpio_set_level(GPIO_NUM_21, INTERCOM_LOCK_GPIO_LOCKED);
     hap_char_update_val(intercom_lock_current_state, &HAP_VAL_LOCK_CURRENT_STATE_SECURED);
 }
 
@@ -82,7 +82,18 @@ void intercom_lock_timer_cb(TimerHandle_t timer)
     hap_char_update_val(intercom_lock_target_state, &HAP_VAL_LOCK_TARGET_STATE_SECURED);
 }
 
-hap_serv_t *intercom_lock_init(uint32_t key_gpio_pin)
+void intercom_lock_gpio_init()
+{
+    gpio_config_t io_conf;
+    io_conf.intr_type = GPIO_INTR_DISABLE;       /* Disable interrupt  */
+    io_conf.pin_bit_mask = GPIO_SEL_21;          /* Bit mask of the pins */
+    io_conf.mode = GPIO_MODE_OUTPUT;             /* Set as input mode */
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;    /* Disable internal pull-up */
+    io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE; /* Enable internal pull-down */
+    gpio_config(&io_conf);
+}
+
+hap_serv_t *intercom_lock_init()
 {
     hap_serv_t *intercom_lock_service = hap_serv_lock_mechanism_create(HAP_VAL_LOCK_CURRENT_STATE_SECURED.u, HAP_LOCK_TARGET_STATE_SECURED);
     hap_serv_add_char(intercom_lock_service, hap_char_name_create("Intercom Lock"));
@@ -94,15 +105,7 @@ hap_serv_t *intercom_lock_init(uint32_t key_gpio_pin)
 
     intercom_lock_timer = xTimerCreate("intercom_lock_timer", pdMS_TO_TICKS(CONFIG_HOMEKIT_INTERCOM_LOCK_TIMEOUT), pdFALSE, 0, intercom_lock_timer_cb);
 
-    gpio_config_t io_conf;
-
-    io_conf.intr_type = GPIO_INTR_DISABLE;       /* Disable interrupt  */
-    io_conf.pin_bit_mask = 1ULL << key_gpio_pin; /* Bit mask of the pins */
-    io_conf.mode = GPIO_MODE_OUTPUT;             /* Set as input mode */
-    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;    /* Disable internal pull-up */
-    io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE; /* Enable internal pull-down */
-
-    gpio_config(&io_conf); /* Set the GPIO configuration */
+    intercom_lock_gpio_init();
 
     return intercom_lock_service;
 }
