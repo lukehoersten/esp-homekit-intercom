@@ -9,19 +9,19 @@
 
 #define LED_ON 1
 #define LED_OFF 0
+#define LED_DELAY 500
+#define LED_NUM_BLINK 3
 
 int intercom_led_identify(hap_acc_t *ha)
 {
     ESP_LOGI(TAG, "Accessory identified");
-
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < LED_NUM_BLINK; i++)
     {
         gpio_set_level(GPIO_NUM_13, LED_ON);
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(LED_DELAY));
         gpio_set_level(GPIO_NUM_13, LED_OFF);
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(LED_DELAY));
     }
-
     return HAP_SUCCESS;
 }
 

@@ -25,14 +25,44 @@ volatile bool is_intercom_bell_blocked;
 static TimerHandle_t intercom_bell_timer; // ignore new bells until timer triggered
 static hap_char_t *intercom_bell_current_state;
 
-bool is_bell_ringing(int val)
+void bell_hap_ring()
 {
-    ESP_LOGI(TAG, "Intercom bell rang with value %d", val);
-    return 2340 < val && val < 2360;
+    ESP_LOGI(TAG, "Intercom bell HAP RING");
+    hap_char_update_val(intercom_bell_current_state, &HAP_PROGRAMMABLE_SWITCH_EVENT_SINGLE_PRESS);
 }
+
+void bell_block()
+{
+    is_intercom_bell_blocked = true;
+    ESP_LOGI(TAG, "Intercom bell updated [blocked: %s]", is_intercom_bell_blocked ? "true" : "false");
+    xTimerReset(intercom_bell_timer, pdFALSE);
+}
+
+void bell_unblock()
+{
+    is_intercom_bell_blocked = false;
+    ESP_LOGI(TAG, "Intercom bell updated [blocked: %s]", is_intercom_bell_blocked ? "true" : "false");
+}
+
+bool is_bell_blocked()
+{
+    ESP_LOGI(TAG, "Intercom bell triggered [blocked: %s]", is_intercom_bell_blocked ? "true" : "false");
+    return is_intercom_bell_blocked;
+}
+
 int read_adc()
 {
-    return adc1_get_raw(ADC1_GPIO33_CHANNEL);
+    int val = adc1_get_raw(ADC1_GPIO33_CHANNEL);
+    ESP_LOGI(TAG, "Intercom bell read [val: %d]", val);
+    return val;
+}
+
+bool is_bell_ringing()
+{
+    int val = read_adc();
+    bool is_ringing = 2340 < val && val < 2360;
+    ESP_LOGI(TAG, "Intercom bell rang [val: %d; is_ringing: %s]", val, is_ringing ? "true" : "false");
+    return is_ringing;
 }
 
 int read_adc_avg()
@@ -48,37 +78,43 @@ int read_adc_avg()
 
 void intercom_bell_read(void *p)
 {
-    ESP_LOGI(TAG, "Intercom bell task started");
     for (;;)
     {
-        ESP_LOGI(TAG, "Intercom bell task waiting");
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        ESP_LOGI(TAG, "Intercom bell task triggered");
-        if (is_bell_ringing(read_adc()))
+        if (!is_bell_blocked() && is_bell_ringing())
         {
-            ESP_LOGI(TAG, "Intercom bell HAP ring");
-            hap_char_update_val(intercom_bell_current_state, &HAP_PROGRAMMABLE_SWITCH_EVENT_SINGLE_PRESS);
-            is_intercom_bell_blocked = true;
-            xTimerReset(intercom_bell_timer, pdFALSE);
+            bell_hap_ring();
+            bell_block();
         }
     }
 }
 
 void IRAM_ATTR intercom_bell_isr(void *arg)
 {
-    if (!is_intercom_bell_blocked)
-    {
-        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-        configASSERT(intercom_bell_read_task != NULL);
-        vTaskNotifyGiveFromISR(intercom_bell_read_task, &xHigherPriorityTaskWoken);
-        portYIELD_FROM_ISR();
-    }
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    configASSERT(intercom_bell_read_task != NULL);
+    vTaskNotifyGiveFromISR(intercom_bell_read_task, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR();
 }
 
 void intercom_bell_timer_cb(TimerHandle_t timer)
 {
-    ESP_LOGI(TAG, "Intercom bell timer fired");
+    bell_unblock();
+}
+
+void intercom_bell_blocker_init()
+{
     is_intercom_bell_blocked = false;
+    intercom_bell_timer = xTimerCreate("intercom_bell_timer", pdMS_TO_TICKS(CONFIG_HOMEKIT_INTERCOM_LOCK_TIMEOUT),
+                                       pdFALSE, 0, intercom_bell_timer_cb);
+}
+
+hap_serv_t *intercom_bell_service_init()
+{
+    hap_serv_t *intercom_bell_service = hap_serv_doorbell_create(0);
+    hap_serv_add_char(intercom_bell_service, hap_char_name_create("Intercom Bell"));
+    intercom_bell_current_state = hap_serv_get_char_by_uuid(intercom_bell_service, HAP_CHAR_UUID_PROGRAMMABLE_SWITCH_EVENT);
+    return intercom_bell_service;
 }
 
 void intercom_bell_isr_gpio_init()
@@ -114,17 +150,11 @@ void intercom_bell_adc_gpio_init()
 
 hap_serv_t *intercom_bell_init()
 {
-    xTaskCreate(intercom_bell_read, INTERCOM_BELL_TASK_NAME, INTERCOM_BELL_TASK_STACKSIZE, NULL, INTERCOM_BELL_TASK_PRIORITY, &intercom_bell_read_task);
+    xTaskCreate(intercom_bell_read, INTERCOM_BELL_TASK_NAME, INTERCOM_BELL_TASK_STACKSIZE, NULL,
+                INTERCOM_BELL_TASK_PRIORITY, &intercom_bell_read_task);
 
-    is_intercom_bell_blocked = false;
-    intercom_bell_timer = xTimerCreate("intercom_bell_timer", pdMS_TO_TICKS(CONFIG_HOMEKIT_INTERCOM_LOCK_TIMEOUT), pdFALSE, 0, intercom_bell_timer_cb);
-
-    hap_serv_t *intercom_bell_service = hap_serv_doorbell_create(0);
-    hap_serv_add_char(intercom_bell_service, hap_char_name_create("Intercom Bell"));
-    intercom_bell_current_state = hap_serv_get_char_by_uuid(intercom_bell_service, HAP_CHAR_UUID_PROGRAMMABLE_SWITCH_EVENT);
-
+    intercom_bell_blocker_init();
     intercom_bell_isr_gpio_init();
     intercom_bell_adc_gpio_init();
-
-    return intercom_bell_service;
+    return intercom_bell_service_init();
 }
