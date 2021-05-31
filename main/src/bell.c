@@ -20,21 +20,17 @@ static hap_val_t HAP_PROGRAMMABLE_SWITCH_EVENT_SINGLE_PRESS = {.u = 0};
 #define INTERCOM_BELL_TASK_NAME "hap_intercom_bell"
 
 static TaskHandle_t intercom_bell_read_task;
-
-volatile bool is_intercom_bell_blocked;
 static TimerHandle_t intercom_bell_timer; // ignore new bells until timer triggered
+volatile bool is_intercom_bell_blocked;
 static hap_char_t *intercom_bell_current_state;
 
-void bell_hap_ring()
+void bell_rang()
 {
     ESP_LOGI(TAG, "bell HAP RING");
     hap_char_update_val(intercom_bell_current_state, &HAP_PROGRAMMABLE_SWITCH_EVENT_SINGLE_PRESS);
-}
 
-void bell_block()
-{
     is_intercom_bell_blocked = true;
-    ESP_LOGI(TAG, "bell updated [blocked: true]");
+    ESP_LOGI(TAG, "bell timer set; bell updated [blocked: true]");
     xTimerReset(intercom_bell_timer, pdFALSE);
 }
 
@@ -51,16 +47,16 @@ void intercom_bell_read(void *p)
     for (;;)
     {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        if (!is_intercom_bell_blocked && is_bell_ringing())
-        {
-            bell_hap_ring();
-            bell_block();
-        }
+        if (is_bell_ringing())
+            bell_rang();
     }
 }
 
 void IRAM_ATTR intercom_bell_isr(void *arg)
 {
+    if (is_intercom_bell_blocked)
+        return;
+
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     configASSERT(intercom_bell_read_task != NULL);
     vTaskNotifyGiveFromISR(intercom_bell_read_task, &xHigherPriorityTaskWoken);
@@ -69,9 +65,8 @@ void IRAM_ATTR intercom_bell_isr(void *arg)
 
 void intercom_bell_timer_cb(TimerHandle_t timer)
 {
-    ESP_LOGI(TAG, "bell timer triggered");
     is_intercom_bell_blocked = false;
-    ESP_LOGI(TAG, "bell updated [blocked: false]");
+    ESP_LOGI(TAG, "bell timer triggered; bell updated [blocked: false]");
 }
 
 void intercom_bell_blocker_init()
