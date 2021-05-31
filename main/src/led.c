@@ -14,7 +14,7 @@
 
 int intercom_led_identify(hap_acc_t *ha)
 {
-    ESP_LOGI(TAG, "Accessory identified");
+    ESP_LOGI(TAG, "accessory identified");
     for (int i = 0; i < LED_NUM_BLINK; i++)
     {
         gpio_set_level(GPIO_NUM_13, LED_ON);

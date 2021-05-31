@@ -27,53 +27,23 @@ static hap_char_t *intercom_bell_current_state;
 
 void bell_hap_ring()
 {
-    ESP_LOGI(TAG, "Intercom bell HAP RING");
+    ESP_LOGI(TAG, "bell HAP RING");
     hap_char_update_val(intercom_bell_current_state, &HAP_PROGRAMMABLE_SWITCH_EVENT_SINGLE_PRESS);
 }
 
 void bell_block()
 {
     is_intercom_bell_blocked = true;
-    ESP_LOGI(TAG, "Intercom bell updated [blocked: %s]", is_intercom_bell_blocked ? "true" : "false");
+    ESP_LOGI(TAG, "bell updated [blocked: true]");
     xTimerReset(intercom_bell_timer, pdFALSE);
-}
-
-void bell_unblock()
-{
-    is_intercom_bell_blocked = false;
-    ESP_LOGI(TAG, "Intercom bell updated [blocked: %s]", is_intercom_bell_blocked ? "true" : "false");
-}
-
-bool is_bell_blocked()
-{
-    ESP_LOGI(TAG, "Intercom bell triggered [blocked: %s]", is_intercom_bell_blocked ? "true" : "false");
-    return is_intercom_bell_blocked;
-}
-
-int read_adc()
-{
-    int val = adc1_get_raw(ADC1_GPIO33_CHANNEL);
-    ESP_LOGI(TAG, "Intercom bell read [val: %d]", val);
-    return val;
 }
 
 bool is_bell_ringing()
 {
-    int val = read_adc();
-    bool is_ringing = 2340 < val && val < 2360;
-    ESP_LOGI(TAG, "Intercom bell rang [val: %d; is_ringing: %s]", val, is_ringing ? "true" : "false");
+    int val = adc1_get_raw(ADC1_GPIO33_CHANNEL);
+    bool is_ringing = 1935 < val && val < 1945;
+    ESP_LOGI(TAG, "bell rang [val: %d; is_ringing: %s]", val, is_ringing ? "true" : "false");
     return is_ringing;
-}
-
-int read_adc_avg()
-{
-    //new average = old average + (next data - old average) / next count
-    int avg = 0;
-    for (int i = 1; i < 10; i++)
-    {
-        avg = avg + ((read_adc() - avg) / i);
-    }
-    return avg;
 }
 
 void intercom_bell_read(void *p)
@@ -81,7 +51,7 @@ void intercom_bell_read(void *p)
     for (;;)
     {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        if (!is_bell_blocked() && is_bell_ringing())
+        if (!is_intercom_bell_blocked && is_bell_ringing())
         {
             bell_hap_ring();
             bell_block();
@@ -99,7 +69,9 @@ void IRAM_ATTR intercom_bell_isr(void *arg)
 
 void intercom_bell_timer_cb(TimerHandle_t timer)
 {
-    bell_unblock();
+    ESP_LOGI(TAG, "bell timer triggered");
+    is_intercom_bell_blocked = false;
+    ESP_LOGI(TAG, "bell updated [blocked: false]");
 }
 
 void intercom_bell_blocker_init()

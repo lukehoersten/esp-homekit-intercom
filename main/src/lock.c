@@ -29,7 +29,7 @@ static hap_char_t *intercom_lock_target_state;
 
 void intercom_lock_unsecure()
 {
-    ESP_LOGI(TAG, "Intercom lock unsecure");
+    ESP_LOGI(TAG, "lock updated [secured: false]");
     gpio_set_level(GPIO_NUM_21, INTERCOM_LOCK_GPIO_UNLOCKED);
     hap_char_update_val(intercom_lock_current_state, &HAP_VAL_LOCK_CURRENT_STATE_UNSECURED);
     xTimerReset(intercom_lock_timer, 10);
@@ -37,7 +37,7 @@ void intercom_lock_unsecure()
 
 void intercom_lock_secure()
 {
-    ESP_LOGI(TAG, "Intercom lock secure");
+    ESP_LOGI(TAG, "lock updated [secured: true]");
     gpio_set_level(GPIO_NUM_21, INTERCOM_LOCK_GPIO_LOCKED);
     hap_char_update_val(intercom_lock_current_state, &HAP_VAL_LOCK_CURRENT_STATE_SECURED);
 }
@@ -51,7 +51,7 @@ int intercom_lock_write_cb(hap_write_data_t write_data[], int count, void *serv_
         write = &write_data[i];
         if (!strcmp(hap_char_get_type_uuid(write->hc), HAP_CHAR_UUID_LOCK_TARGET_STATE))
         {
-            ESP_LOGI(TAG, "Intercom lock received write [%d]", write->val.u);
+            ESP_LOGI(TAG, "lock received write [val: %d]", write->val.u);
 
             switch (write->val.u)
             {
@@ -77,7 +77,7 @@ int intercom_lock_write_cb(hap_write_data_t write_data[], int count, void *serv_
 
 void intercom_lock_timer_cb(TimerHandle_t timer)
 {
-    ESP_LOGI(TAG, "Intercom lock timer fired");
+    ESP_LOGI(TAG, "lock timer fired");
     intercom_lock_secure();
     hap_char_update_val(intercom_lock_target_state, &HAP_VAL_LOCK_TARGET_STATE_SECURED);
 }

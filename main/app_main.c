@@ -67,10 +67,10 @@ static void intercom_init(void *p)
 
 	app_wifi_init(); /* Initialize Wi-Fi */
 	hap_start();	 /* After all the initializations are done, start the HAP core */
-	ESP_LOGI(TAG, "Intercom HAP started");
+	ESP_LOGI(TAG, "HAP started");
 
 	app_wifi_start(portMAX_DELAY); /* Start Wi-Fi */
-	ESP_LOGI(TAG, "Intercom WIFI started");
+	ESP_LOGI(TAG, "WIFI started");
 
 	vTaskDelete(NULL); /* The task ends here. The read/write callbacks will be invoked by the HAP Framework */
 }
