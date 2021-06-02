@@ -1,3 +1,3 @@
 #include <hap.h>
 
-hap_serv_t *intercom_bell_init();
+hap_serv_t *bell_service_init();

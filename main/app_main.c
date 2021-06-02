@@ -14,7 +14,7 @@
 #define INTERCOM_TASK_STACKSIZE 4 * 1024
 #define INTERCOM_TASK_NAME "hap_intercom"
 
-static void intercom_init(void *p)
+static void intercom_accessory_init(void *p)
 {
 	hap_init(HAP_TRANSPORT_WIFI); /* Initialize the HAP core */
 
@@ -26,7 +26,7 @@ static void intercom_init(void *p)
 		.fw_rev = "0.1.0",
 		.hw_rev = NULL,
 		.pv = "1.1.0",
-		.identify_routine = intercom_led_identify,
+		.identify_routine = led_identify,
 		.cid = HAP_CID_DOOR,
 	};
 
@@ -34,9 +34,9 @@ static void intercom_init(void *p)
 
 	uint8_t product_data[] = {'E', 'S', 'P', '3', '2', 'H', 'A', 'P'};
 	hap_acc_add_product_data(intercom_accessory, product_data, sizeof(product_data));
-	hap_acc_add_serv(intercom_accessory, intercom_bell_init());
-	hap_acc_add_serv(intercom_accessory, intercom_lock_init());
-	intercom_led_init();
+	hap_acc_add_serv(intercom_accessory, bell_service_init());
+	hap_acc_add_serv(intercom_accessory, lock_service_init());
+	led_identify_service_init();
 
 	hap_add_accessory(intercom_accessory); /* Add the Accessory to the HomeKit Database */
 
@@ -77,5 +77,5 @@ static void intercom_init(void *p)
 
 void app_main()
 {
-	xTaskCreate(intercom_init, INTERCOM_TASK_NAME, INTERCOM_TASK_STACKSIZE, NULL, INTERCOM_TASK_PRIORITY, NULL);
+	xTaskCreate(intercom_accessory_init, INTERCOM_TASK_NAME, INTERCOM_TASK_STACKSIZE, NULL, INTERCOM_TASK_PRIORITY, NULL);
 }
