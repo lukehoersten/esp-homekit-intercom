@@ -36,6 +36,7 @@ void bell_rang()
 
 bool is_bell_ringing()
 {
+    vTaskDelay(20);
     int val = adc1_get_raw(ADC1_GPIO33_CHANNEL);
     bool is_ringing = 1935 < val && val < 1945;
     ESP_LOGI(TAG, "bell rang [val: %d; is_ringing: %s]", val, is_ringing ? "true" : "false");

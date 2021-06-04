@@ -20,7 +20,7 @@ static hap_char_t *lock_target_state;
 void lock_update_current_state(uint8_t is_secured)
 {
     ESP_LOGI(TAG, "lock updated [%s]", is_secured ? "secured" : "unsecured");
-    gpio_set_level(GPIO_NUM_21, is_secured);
+    gpio_set_level(GPIO_NUM_21, !is_secured);
 
     hap_val_t val = {.u = is_secured};
     hap_char_update_val(lock_current_state, &val);
