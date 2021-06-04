@@ -13,8 +13,6 @@
 #include <intercom.h>
 #include <bell.h>
 
-static hap_val_t HAP_PROGRAMMABLE_SWITCH_EVENT_SINGLE_PRESS = {.u = 0};
-
 #define BELL_TASK_PRIORITY 1
 #define BELL_TASK_STACKSIZE 4 * 1024
 #define BELL_TASK_NAME "hap_intercom_bell"
@@ -27,6 +25,7 @@ static hap_char_t *bell_current_state;
 void bell_rang()
 {
     ESP_LOGI(TAG, "bell HAP RING");
+    hap_val_t HAP_PROGRAMMABLE_SWITCH_EVENT_SINGLE_PRESS = {.u = 0};
     hap_char_update_val(bell_current_state, &HAP_PROGRAMMABLE_SWITCH_EVENT_SINGLE_PRESS);
 
     is_bell_blocked = true;
@@ -36,20 +35,28 @@ void bell_rang()
 
 bool is_bell_ringing()
 {
-    vTaskDelay(20);
-    int val = adc1_get_raw(ADC1_GPIO33_CHANNEL);
-    bool is_ringing = 1935 < val && val < 1945;
+    int val = adc1_get_raw(ADC1_GPIO33_CHANNEL); // sample the doorbell voltage
+    bool is_ringing = 1935 < val && val < 1945;  // check doorbell voltage range
     ESP_LOGI(TAG, "bell rang [val: %d; is_ringing: %s]", val, is_ringing ? "true" : "false");
     return is_ringing;
+}
+
+void sample_bell_adc()
+{
+    for (int i = 0; i < 15; i++) // sample 15 times
+    {
+        vTaskDelay(20); // wait 20 ticks for signal to stabalize (at 80MHz clock, 12.5ns per tick)
+        if (is_bell_ringing())
+            return bell_rang();
+    }
 }
 
 void bell_read_task(void *p)
 {
     for (;;)
     {
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        if (is_bell_ringing())
-            bell_rang();
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY); // block until doorbell hardware interrupt
+        sample_bell_adc();
     }
 }
 
